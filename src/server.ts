@@ -5,6 +5,8 @@ import dotenv from 'dotenv'
 import { enterWorld } from './tools/enterWorld.js'
 import { observe } from './tools/observe.js'
 import { recordVisit } from './tools/recordVisit.js'
+import { explore } from './tools/explore.js'
+import { registerScene } from './tools/registerScene.js'
 
 dotenv.config()
 
@@ -43,6 +45,38 @@ server.tool(
   },
   async ({ agentId, parcel, outcome }) => {
     const result = await recordVisit({ agentId, parcel, outcome })
+    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
+  }
+)
+
+server.tool(
+  'register_scene',
+  'Register a Decentraland scene for AI agent discovery',
+  {
+    parcel: z.string().describe('Parcel coordinates e.g. "46,115"'),
+    name: z.string().describe('Scene name'),
+    description: z.string().optional().describe('Scene description'),
+    category: z.enum(['ai_service', 'art', 'game', 'shop', 'event', 'education', 'other']),
+    services: z.string().optional().describe('Services offered, comma separated'),
+    agentInstructions: z.string().optional().describe('Instructions for AI agents visiting this scene'),
+    owner: z.string().optional().describe('Owner wallet or name')
+  },
+  async (params) => {
+    const result = await registerScene(params)
+    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
+  }
+)
+
+server.tool(
+  'explore',
+  'Autonomously explore nearby parcels not yet visited, record to Lowdown',
+  {
+    agentId: z.string().describe('Agent identifier'),
+    baseParcel: z.string().describe('Base parcel to explore around e.g. "46,115"'),
+    radius: z.number().optional().describe('Search radius in parcels, default 3')
+  },
+  async ({ agentId, baseParcel, radius }) => {
+    const result = await explore({ agentId, baseParcel, radius })
     return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
   }
 )

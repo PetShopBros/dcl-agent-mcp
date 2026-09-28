@@ -55,10 +55,11 @@ export async function getParcelInfo(parcel: string) {
   const [x, y] = parcel.split(',').map(Number)
 
   const places = await axios.get(`https://places.decentraland.org/api/places?positions=${x},${y}`)
+  const scene = places.data?.data?.[0] ?? null
 
   return {
     parcel,
-    scene: places.data?.data?.[0] ?? null,
+    scene,
     tile: null
   }
 }
