@@ -7,8 +7,10 @@ exports.recordInteraction = recordInteraction;
 const axios_1 = __importDefault(require("axios"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-const LOWDOWN_URL = process.env.LOWDOWN_API_URL;
+const LOWDOWN_URL = process.env.LOWDOWN_API_URL ?? '';
 async function recordInteraction(params) {
+    if (!LOWDOWN_URL)
+        return null;
     try {
         const res = await axios_1.default.post(`${LOWDOWN_URL}/api/interactions`, {
             actor: params.agentId,

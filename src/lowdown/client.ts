@@ -2,7 +2,7 @@ import axios from 'axios'
 import dotenv from 'dotenv'
 dotenv.config()
 
-const LOWDOWN_URL = process.env.LOWDOWN_API_URL!
+const LOWDOWN_URL = process.env.LOWDOWN_API_URL ?? ''
 
 export async function recordInteraction(params: {
   agentId: string
@@ -10,6 +10,8 @@ export async function recordInteraction(params: {
   action: string
   outcome: string
 }) {
+  if (!LOWDOWN_URL) return null
+
   try {
     const res = await axios.post(`${LOWDOWN_URL}/api/interactions`, {
       actor: params.agentId,
