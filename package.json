@@ -1,8 +1,11 @@
 {
   "name": "dcl-agent-mcp",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "AI agent bridge for Decentraland — give your agents a body in the metaverse",
-  "main": "index.js",
+  "main": "dist/server.js",
+  "bin": {
+    "dcl-agent-mcp": "dist/server.js"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
@@ -13,9 +16,13 @@
     "type": "git",
     "url": "git+https://github.com/PetShopBros/dcl-agent-mcp.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["mcp", "decentraland", "ai-agent", "metaverse", "lowdown"],
+  "author": "PetShopBros",
   "license": "ISC",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "bugs": {
     "url": "https://github.com/PetShopBros/dcl-agent-mcp/issues"
   },
