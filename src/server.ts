@@ -1,4 +1,4 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+﻿import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 import dotenv from 'dotenv'
@@ -7,17 +7,20 @@ import { observe } from './tools/observe.js'
 import { recordVisit } from './tools/recordVisit.js'
 import { explore } from './tools/explore.js'
 import { registerScene } from './tools/registerScene.js'
+import { interact } from './tools/interact.js'
+import { navigateTo } from './tools/navigateTo.js'
 import { pulseBridge } from './pulse/PulseBridge.js'
-import { getParcelInfo } from './dcl/api.js'
+import { dclAdapter } from './adapters/DCLAdapter.js'
+import { recordOutcome } from './lowdown/client.js'
 
 dotenv.config()
 
 const server = new McpServer({
   name: 'dcl-agent-mcp',
-  version: '0.2.0',
+  version: '0.3.0',
 })
 
-// ── Pulse presence tools ─────────────────────────────────────────────────────
+// ?? Pulse presence tools ?????????????????????????????????????????????????????
 
 server.tool(
   'enter_world',
@@ -55,28 +58,11 @@ server.tool(
 
 server.tool(
   'observe_world',
-  'Observe the current avatar state (wallet, position) and scene info at current location.',
+  'Observe current avatar state + scene info with actionable objects. Returns wallet, position, scene metadata, and list of entities the agent can interact with.',
   {},
   async () => {
-    const pulse = await pulseBridge.observe()
-    let scene = null
-
-    if (pulse.ok && pulse.position) {
-      // Convert world coords back to parcel for REST lookup
-      const px = Math.floor(pulse.position.x / 16)
-      const pz = Math.floor(pulse.position.z / 16)
-      const info = await getParcelInfo(`${px},${pz}`)
-      scene = info.scene
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({ ...pulse, scene, timestamp: new Date().toISOString() }, null, 2),
-        },
-      ],
-    }
+    const result = await dclAdapter.observe()
+    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
   }
 )
 
@@ -90,7 +76,53 @@ server.tool(
   }
 )
 
-// ── REST / Lowdown tools ─────────────────────────────────────────────────────
+// ?? Action tools ?????????????????????????????????????????????????????????????
+
+server.tool(
+  'interact',
+  'Interact with a scene entity by id. Navigates to entity, retrieves service info, and records outcome to Lowdown.',
+  {
+    entityId: z.string().describe('Entity id from observe_world objects list e.g. "lowdown-demo"'),
+    agentId: z.string().optional().describe('Agent identifier for Lowdown recording'),
+  },
+  async ({ entityId, agentId }) => {
+    const result = await interact({ entityId, agentId })
+    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
+  }
+)
+
+server.tool(
+  'navigate_to',
+  'Navigate avatar to a named destination (scene name or id). Looks up parcel from registry and moves.',
+  {
+    destination: z.string().describe('Scene name or id e.g. "Agent Gateway" or "lowdown-demo"'),
+    agentId: z.string().optional().describe('Agent identifier for Lowdown recording'),
+  },
+  async ({ destination, agentId }) => {
+    const result = await navigateTo({ destination, agentId })
+    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
+  }
+)
+
+server.tool(
+  'record_outcome',
+  'Record a structured action outcome to Lowdown. Use after any significant agent action.',
+  {
+    agentId: z.string().describe('Agent identifier'),
+    action: z.string().describe('Action performed e.g. "interact", "navigate", "observe"'),
+    target: z.string().describe('Target entity or parcel'),
+    targetType: z.enum(['entity', 'scene', 'parcel', 'service']).optional().default('entity'),
+    outcome: z.enum(['success', 'not_found', 'error']).describe('Action result'),
+    result: z.string().optional().describe('JSON string with additional result data'),
+  },
+  async ({ agentId, action, target, targetType, outcome, result }) => {
+    const parsed = result ? JSON.parse(result) : undefined
+    const recorded = await recordOutcome({ agentId, action, target, targetType, outcome, result: parsed })
+    return { content: [{ type: 'text', text: JSON.stringify(recorded, null, 2) }] }
+  }
+)
+
+// ?? REST / Lowdown tools ?????????????????????????????????????????????????????
 
 server.tool(
   'observe',
@@ -148,12 +180,13 @@ server.tool(
   }
 )
 
-// ── Start ────────────────────────────────────────────────────────────────────
+// ?? Start ????????????????????????????????????????????????????????????????????
 
 async function main() {
   const transport = new StdioServerTransport()
   await server.connect(transport)
-  console.error('[dcl-agent-mcp] v0.2.0 running on stdio')
+  console.error('[dcl-agent-mcp] v0.3.0 running on stdio')
 }
 
 main()
+

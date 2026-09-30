@@ -1,10 +1,10 @@
-{
+﻿{
   "name": "dcl-agent-mcp",
-  "version": "0.2.0",
+  "version": "0.3.1",
   "description": "AI agent bridge for Decentraland ??give your agents a body in the metaverse",
   "main": "dist/server.js",
   "bin": {
-    "dcl-agent-mcp": "dist/server.js"
+    "dcl-agent-mcp": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
@@ -38,3 +38,4 @@
     "typescript": "^7.0.2"
   }
 }
+
