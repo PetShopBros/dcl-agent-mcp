@@ -1,16 +1,19 @@
-import { getParcelInfo, teleportTo } from '../dcl/api.js'
+import { getParcelInfo } from '../dcl/api.js'
+import { pulseBridge } from '../pulse/PulseBridge.js'
 
 export async function enterWorld(parcel: string) {
-  const [info, teleported] = await Promise.all([
-    getParcelInfo(parcel),
-    teleportTo(parcel)
-  ])
+  // 1. Real Pulse presence in DCL (agentic body)
+  const pulse = await pulseBridge.connect(parcel)
+
+  // 2. Scene metadata via REST
+  const info = await getParcelInfo(parcel)
+
   return {
-    status: 'entered',
+    status: pulse.ok ? 'entered' : 'rest_only',
     parcel,
-    teleported,
+    wallet: pulse.wallet ?? null,
+    position: pulse.position ?? null,
     scene: info.scene,
-    tile: info.tile,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   }
 }

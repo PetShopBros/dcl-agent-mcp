@@ -1,0 +1,12 @@
+[
+  {
+    "type": "SIGNER",
+    "payload": "0xe412A50ff66c2aD4fe450a410e5ee1d2f55885e4",
+    "signature": ""
+  },
+  {
+    "type": "ECDSA_EPHEMERAL",
+    "payload": "Decentraland Login\nEphemeral address: 0x4fa0C77CcAc7F7C7FcBd8dd802F6952Bb9C57003\nExpiration: 2027-09-30T03:26:55.786Z",
+    "signature": "0x80d2bc173740c106cdbaa7cb4483c5a024f5e2695dfbfbaf4bf4bfd5ec71ed7379a95c28e1f84a4ad398b680a032207cc8ea16c6b683a33066f537282f1533031c"
+  }
+]
