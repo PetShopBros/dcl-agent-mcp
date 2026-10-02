@@ -22,9 +22,9 @@ class DCLAdapter {
             const [dclInfo, lowdownScene] = await Promise.all([(0, api_js_1.getParcelInfo)(parcel), (0, client_js_1.getSceneInfo)(parcel)]);
             scene = dclInfo.scene;
             if (lowdownScene) {
-                agentInstructions = str(lowdownScene.agent_instructions) ?? null;
+                agentInstructions = lowdownScene.agentInstructions ?? null;
                 if (lowdownScene.services) {
-                    const sceneName = str(lowdownScene.name) ?? parcel;
+                    const sceneName = lowdownScene.name ?? parcel;
                     objects = lowdownScene.services.split(',').map(s => s.trim()).filter(Boolean).map((svc) => ({
                         id: svc.toLowerCase().replace(/\s+/g, '-'), type: 'service', name: svc, action: 'interact',
                         description: `Service available in ${sceneName}`
@@ -58,7 +58,7 @@ class DCLAdapter {
             const [px, pz] = scene.parcel.split(',').map(Number);
             await PulseBridge_js_1.pulseBridge.move(px * 16 + 8, 0, pz * 16 + 8);
         }
-        return { ok: true, world: this.worldId, entityId, outcome: 'success', result: { service: str(scene.name), description: str(scene.description), agentInstructions: str(scene.agent_instructions), nextAction: scene.agent_instructions ? 'follow_instructions' : 'observe' }, timestamp: new Date().toISOString() };
+        return { ok: true, world: this.worldId, entityId, outcome: 'success', result: { service: scene.name, description: scene.description, agentInstructions: scene.agentInstructions, nextAction: scene.agentInstructions ? 'follow_instructions' : 'observe' }, timestamp: new Date().toISOString() };
     }
     async disconnect() { const r = await PulseBridge_js_1.pulseBridge.disconnect(); return { ok: r.ok }; }
 }

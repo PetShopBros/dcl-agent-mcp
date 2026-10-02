@@ -1,20 +1,5 @@
 import { getParcelInfo } from '../dcl/api.js'
-import { recordInteraction } from '../lowdown/client.js'
-import axios from 'axios'
-
-const LOWDOWN_URL = process.env.LOWDOWN_API_URL!
-
-async function getVisitedParcels(agentId: string): Promise<string[]> {
-  try {
-    const res = await axios.get(`${LOWDOWN_URL}/api/interactions`, {
-      params: { actor: agentId, task_type: 'discover', limit: 500 }
-    })
-    const targets = (res.data?.data ?? []).map((i: any) => i.target.replace('dcl:', ''))
-    return [...new Set<string>(targets)]
-  } catch {
-    return []
-  }
-}
+import { lowdownClient, recordInteraction } from '../lowdown/client.js'
 
 function getActivityScore(scene: any): 'dead' | 'low' | 'medium' | 'active' {
   if (!scene) return 'dead'
@@ -48,22 +33,6 @@ function evaluateRelevance(category: string, activityScore: string): 'high' | 'm
   return 'low'
 }
 
-interface RegisteredScene {
-  parcel: string
-  name: string
-  category: string
-  agent_instructions?: string
-}
-
-async function getRegisteredScenes(): Promise<RegisteredScene[]> {
-  try {
-    const res = await axios.get(`${LOWDOWN_URL}/api/scenes`)
-    return res.data?.data ?? []
-  } catch {
-    return []
-  }
-}
-
 function getNearbyParcels(base: string, radius: number = 5): string[] {
   const [bx, by] = base.split(',').map(Number)
   const parcels: string[] = []
@@ -83,7 +52,7 @@ export async function explore(params: {
 }) {
   const { agentId, baseParcel, radius = 5 } = params
 
-  const visited = await getVisitedParcels(agentId)
+  const visited = await lowdownClient.getVisitedParcels(agentId)
   const nearby = getNearbyParcels(baseParcel, radius)
   const unvisited = nearby.filter(p => !visited.includes(p))
 
@@ -91,7 +60,7 @@ export async function explore(params: {
     return { status: 'all_visited', visited: visited.length }
   }
 
-  const registeredScenes = await getRegisteredScenes()
+  const registeredScenes = await lowdownClient.getRegisteredScenes()
   const registeredParcels = registeredScenes.map(s => s.parcel)
   const allToCheck = visited.includes(baseParcel) ? unvisited : [baseParcel, ...unvisited]
   const registeredUnvisited = allToCheck.filter(p => registeredParcels.includes(p))
@@ -130,7 +99,7 @@ export async function explore(params: {
       activity_score: activityScore,
       category,
       relevance,
-      agent_instructions: registeredScene?.agent_instructions ?? null,
+      agent_instructions: registeredScene?.agentInstructions ?? null,
       visited_before: visited.length,
       timestamp: new Date().toISOString()
     }

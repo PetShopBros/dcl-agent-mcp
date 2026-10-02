@@ -1,25 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.explore = explore;
 const api_js_1 = require("../dcl/api.js");
 const client_js_1 = require("../lowdown/client.js");
-const axios_1 = __importDefault(require("axios"));
-const LOWDOWN_URL = process.env.LOWDOWN_API_URL;
-async function getVisitedParcels(agentId) {
-    try {
-        const res = await axios_1.default.get(`${LOWDOWN_URL}/api/interactions`, {
-            params: { actor: agentId, task_type: 'discover', limit: 500 }
-        });
-        const targets = (res.data?.data ?? []).map((i) => i.target.replace('dcl:', ''));
-        return [...new Set(targets)];
-    }
-    catch {
-        return [];
-    }
-}
 function getActivityScore(scene) {
     if (!scene)
         return 'dead';
@@ -62,15 +45,6 @@ function evaluateRelevance(category, activityScore) {
         return 'medium';
     return 'low';
 }
-async function getRegisteredScenes() {
-    try {
-        const res = await axios_1.default.get(`${LOWDOWN_URL}/api/scenes`);
-        return res.data?.data ?? [];
-    }
-    catch {
-        return [];
-    }
-}
 function getNearbyParcels(base, radius = 5) {
     const [bx, by] = base.split(',').map(Number);
     const parcels = [];
@@ -85,13 +59,13 @@ function getNearbyParcels(base, radius = 5) {
 }
 async function explore(params) {
     const { agentId, baseParcel, radius = 5 } = params;
-    const visited = await getVisitedParcels(agentId);
+    const visited = await client_js_1.lowdownClient.getVisitedParcels(agentId);
     const nearby = getNearbyParcels(baseParcel, radius);
     const unvisited = nearby.filter(p => !visited.includes(p));
     if (unvisited.length === 0) {
         return { status: 'all_visited', visited: visited.length };
     }
-    const registeredScenes = await getRegisteredScenes();
+    const registeredScenes = await client_js_1.lowdownClient.getRegisteredScenes();
     const registeredParcels = registeredScenes.map(s => s.parcel);
     const allToCheck = visited.includes(baseParcel) ? unvisited : [baseParcel, ...unvisited];
     const registeredUnvisited = allToCheck.filter(p => registeredParcels.includes(p));
@@ -123,7 +97,7 @@ async function explore(params) {
             activity_score: activityScore,
             category,
             relevance,
-            agent_instructions: registeredScene?.agent_instructions ?? null,
+            agent_instructions: registeredScene?.agentInstructions ?? null,
             visited_before: visited.length,
             timestamp: new Date().toISOString()
         };
