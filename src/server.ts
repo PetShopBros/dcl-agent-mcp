@@ -51,7 +51,7 @@ server.tool(
     z: z.number().describe('World Z coordinate'),
   },
   async ({ x, y, z }) => {
-    const result = await pulseBridge.move(x, y, z)
+    const result = await dclAdapter.move(x, y, z)
     return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
   }
 )

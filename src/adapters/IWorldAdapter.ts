@@ -54,6 +54,12 @@ export interface NavigateResult {
   timestamp: string
 }
 
+export interface MoveResult {
+  ok: boolean
+  status: 'success' | 'blocked' | 'failed'
+  position?: Position
+}
+
 export interface IWorldAdapter {
   /** World identifier e.g. "decentraland", "roblox" */
   readonly worldId: string
@@ -64,8 +70,8 @@ export interface IWorldAdapter {
   /** Observe current state with actionable objects */
   observe(): Promise<WorldState>
 
-  /** Low-level move to world coordinates */
-  move(x: number, y: number, z: number): Promise<{ ok: boolean; position?: Position }>
+  /** Low-level move to world coordinates. Returns status: success | blocked | failed */
+  move(x: number, y: number, z: number): Promise<MoveResult>
 
   /** High-level navigation by name/id */
   navigateTo(name: string): Promise<NavigateResult>

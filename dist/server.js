@@ -36,7 +36,7 @@ server.tool('move', 'Move the avatar to specific world coordinates. To compute f
     y: zod_1.z.number().default(0).describe('World Y coordinate (height, usually 0)'),
     z: zod_1.z.number().describe('World Z coordinate'),
 }, async ({ x, y, z }) => {
-    const result = await PulseBridge_js_1.pulseBridge.move(x, y, z);
+    const result = await DCLAdapter_js_1.dclAdapter.move(x, y, z);
     return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
 });
 server.tool('observe_world', 'Observe current avatar state + scene info with actionable objects. Returns wallet, position, scene metadata, and list of entities the agent can interact with.', {}, async () => {
